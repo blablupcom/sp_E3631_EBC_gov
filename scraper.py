@@ -85,8 +85,8 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "E1232_CBC_gov"
-url = "https://www.dorsetforyou.gov.uk/your-council/about-your-council/budgets-and-spending/open-data-and-transparency/payments-to-suppliers-christchurch-borough-council.aspx"
+entity_id = "E3631_EBC_gov"
+url = "http://www.elmbridge.gov.uk/council/payment-to-suppliers/"
 errors = 0
 data = []
 
@@ -98,25 +98,37 @@ soup = BeautifulSoup(html, 'lxml')
 
 #### SCRAPE DATA
 
-links = soup.find('main', id='main').find_all('li')
+
+links = soup.find('div', attrs = {'class': 'ClientAreaContainer'}).find('ul').find_all('a', 'download-sheet ')
 for link in links:
-    if 'http' not in link.find('a')['href']:
-        url = 'https://www.dorsetforyou.gov.uk/' + link.find('a')['href'][1:]
+    if 'http' not in link['href']:
+        url = 'http://www.elmbridge.gov.uk'+link['href']
     else:
-        url = link.find('a')['href'][1:]
-    if '.xlsx' in url or '.xls' in url or '.csv' in url:
-        file_name = link.text.strip()
-        csvYr = link.text.strip()[-4:]
-        if 'Q4' in file_name:
-            csvMth = 'Q1'
-        if 'Q3' in file_name:
-            csvMth = 'Q4'
-        if 'Q2' in file_name:
-            csvMth = 'Q3'
-        if 'Q1' in file_name:
-            csvMth = 'Q2'
-        csvMth = convert_mth_strings(csvMth.upper())
-        data.append([csvYr, csvMth, url])
+        url = link['href']
+    file_name = link.text
+    csvMth = ''
+    if 'qtr4' in file_name or 'qtr 4' in file_name:
+        csvMth = 'Q1'
+        year_text = re.match(r'.*([1-3][0-9]{3})', file_name)
+        if year_text is not None:
+            csvYr = str(int(year_text.group(1)) + 1)
+    if 'qtr3' in file_name:
+        csvMth = 'Q4'
+        year_text = re.match(r'.*([1-3][0-9]{3})', file_name)
+        if year_text is not None:
+            csvYr = year_text.group(1)
+    if 'qtr2' in file_name:
+        csvMth = 'Q3'
+        year_text = re.match(r'.*([1-3][0-9]{3})', file_name)
+        if year_text is not None:
+            csvYr = year_text.group(1)
+    if 'qtr 1' in file_name or 'qtr1' in file_name:
+        csvMth = 'Q2'
+        year_text = re.match(r'.*([1-3][0-9]{3})', file_name)
+        if year_text is not None:
+            csvYr = year_text.group(1)
+    csvMth = convert_mth_strings(csvMth.upper())
+    data.append([csvYr, csvMth, url])
 
 
 #### STORE DATA 1.0
